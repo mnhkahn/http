@@ -25,6 +25,7 @@ type Header map[string][]string
 func NewRequst(b string) *Request {
 	r := new(Request)
 	r.Headers = make(map[string][]string, 0)
+	//	bufio.ReadString('\n')
 	for i, line := range strings.Split(b, CRLF) {
 		if i == 0 {
 			startLine := strings.Split(line, " ")

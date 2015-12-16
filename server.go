@@ -74,7 +74,7 @@ func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	ctx := NewContext()
-	ctx.Resp = new(Response)
+	ctx.Resp = NewResponse()
 
 	buf := make([]byte, 1024)
 	reqLen, err := conn.Read(buf)
@@ -87,9 +87,7 @@ func handleConnection(conn net.Conn) {
 	ctx.Resp.Proto = ctx.Req.Proto
 	if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url] != nil {
 		DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url].ServeHTTP(ctx)
-		ctx.Resp.StatusCode = StatusOK
 	} else {
-		panic(2)
 		ctx.Resp.StatusCode = StatusNotFound
 	}
 
@@ -114,13 +112,11 @@ END:
 }
 
 func Router(path string, method string, ctrl ControllerIfac, methodName string) {
-	r := make(map[string]Handler)
 	handler := new(Handle)
 	handler.ctrl = ctrl
 	handler.methodName = methodName
 	handler.fn = reflect.ValueOf(handler.ctrl).MethodByName(handler.methodName)
-	r[path] = handler
-	DEFAULT_SERVER.Routes.routes[method] = r
+	DEFAULT_SERVER.Routes.routes[method][path] = handler
 }
 
 var DEFAULT_ERROR_PAGE = "<iframe scrolling='no' frameborder='0' src='http://yibo.iyiyun.com/js/yibo404/key/2354' width='640' height='464' style='display:block;'></iframe>"
