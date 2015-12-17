@@ -78,6 +78,7 @@ func init() {
 	if logErr != nil {
 		fmt.Println("Fail to find", "error.log", " start Failed")
 	}
+
 	ErrLog = log.New(errlogFile, "", log.LstdFlags|log.Llongfile)
 }
 
@@ -92,23 +93,22 @@ func handleConnection(conn net.Conn) {
 	buf := make([]byte, 1024)
 	reqLen, err := conn.Read(buf)
 	if err != nil {
-		ErrLog.Println("Error to read message because of ", err)
+		ErrLog.Println("Error to read message because of ", err, reqLen)
 		ctx.Resp.StatusCode = StatusInternalServerError
-		goto END
-	}
-	ctx.Req = NewRequst(string(buf[:reqLen-1]))
-	ctx.Resp.Proto = ctx.Req.Proto
-	if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url] != nil {
-		DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url].ServeHTTP(ctx)
+		ctx.Req = new(Request)
 	} else {
-		if _, exists := HTTP_METHOD[ctx.Req.Method]; !exists {
-			ctx.Resp.StatusCode = StatusMethodNotAllowed
+		ctx.Req = NewRequst(string(buf[:reqLen-1]))
+		ctx.Resp.Proto = ctx.Req.Proto
+		if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url] != nil {
+			DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url].ServeHTTP(ctx)
 		} else {
-			ctx.Resp.StatusCode = StatusNotFound
+			if _, exists := HTTP_METHOD[ctx.Req.Method]; !exists {
+				ctx.Resp.StatusCode = StatusMethodNotAllowed
+			} else {
+				ctx.Resp.StatusCode = StatusNotFound
+			}
 		}
 	}
-
-END:
 
 	if ctx.Resp.StatusCode == StatusNotFound {
 		ctx.Resp.Body = DEFAULT_ERROR_PAGE
