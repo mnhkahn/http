@@ -13,5 +13,7 @@ type Response struct {
 func NewResponse() *Response {
 	resp := new(Response)
 	resp.StatusCode = StatusOK
+	resp.Headers = NewHeader()
+
 	return resp
 }
