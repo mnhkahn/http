@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"strings"
 )
 
@@ -18,20 +19,27 @@ type Request struct {
 	Headers Header
 
 	Body string
+
+	Raw bytes.Buffer
 }
 
-func NewRequst(b string) *Request {
+func NewRequest() *Request {
 	r := new(Request)
-	r.Headers = make(map[string][]string, 0)
+	return r
+}
+
+func (this *Request) Init() {
+	b := string(this.Raw.Bytes())
+	this.Headers = make(map[string][]string, 0)
 
 	startLine := strings.Split(b[:strings.Index(b, CRLF)], " ")
 	if len(startLine) == 3 {
-		r.Method, r.Url, r.Proto = startLine[0], startLine[1], startLine[2]
+		this.Method, this.Url, this.Proto = startLine[0], startLine[1], startLine[2]
 	}
 	b = b[strings.Index(b, CRLF)+len(CRLF):]
 
 	if strings.LastIndex(b, CRLF+CRLF) != -1 {
-		r.Body = b[strings.LastIndex(b, CRLF+CRLF):]
+		this.Body = b[strings.LastIndex(b, CRLF+CRLF):]
 		b = b[:strings.LastIndex(b, CRLF+CRLF)-2]
 	}
 	b = strings.TrimSpace(b)
@@ -40,13 +48,11 @@ func NewRequst(b string) *Request {
 		k, v := line[:strings.Index(line, ":")], line[strings.Index(line, ":")+1:]
 		k, v = strings.TrimSpace(k), strings.TrimSpace(v)
 		if k == HTTP_HEAD_USERAGENT {
-			r.UserAgent = v
+			this.UserAgent = v
 		} else if k == HTTP_HEAD_HOST {
-			r.Host = v
+			this.Host = v
 		} else {
-			r.Headers[k] = append(r.Headers[k], v)
+			this.Headers[k] = append(this.Headers[k], v)
 		}
 	}
-
-	return r
 }

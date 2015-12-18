@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -88,25 +89,37 @@ func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	ctx := NewContext()
+	ctx.Req = NewRequest()
 	ctx.Resp = NewResponse()
 
-	buf := make([]byte, 1024)
-	reqLen, err := conn.Read(buf)
-	if err != nil {
-		ErrLog.Println("Error to read message because of ", err, reqLen)
-		ctx.Resp.StatusCode = StatusInternalServerError
-		ctx.Req = new(Request)
-	} else {
-		ctx.Req = NewRequst(string(buf[:reqLen-1]))
-		ctx.Resp.Proto = ctx.Req.Proto
-		if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url] != nil {
-			DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url].ServeHTTP(ctx)
-		} else {
-			if _, exists := HTTP_METHOD[ctx.Req.Method]; !exists {
-				ctx.Resp.StatusCode = StatusMethodNotAllowed
-			} else {
-				ctx.Resp.StatusCode = StatusNotFound
+	for {
+		buf := make([]byte, 1024)
+		reqLen, err := conn.Read(buf)
+		if reqLen > 0 && err == nil {
+			ctx.Req.Raw.Write(buf)
+			if reqLen < len(buf) && err == nil {
+				break
 			}
+		} else if err == io.EOF {
+			break
+		} else if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
+			break
+		} else {
+			ErrLog.Println("Error to read message because of ", err, reqLen)
+			ctx.Resp.StatusCode = StatusInternalServerError
+			break
+		}
+	}
+
+	ctx.Req.Init()
+	ctx.Resp.Proto = ctx.Req.Proto
+	if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url] != nil {
+		DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url].ServeHTTP(ctx)
+	} else {
+		if _, exists := HTTP_METHOD[ctx.Req.Method]; !exists {
+			ctx.Resp.StatusCode = StatusMethodNotAllowed
+		} else {
+			ctx.Resp.StatusCode = StatusNotFound
 		}
 	}
 
@@ -125,7 +138,7 @@ func handleConnection(conn net.Conn) {
 	}
 	buffers.WriteString("\r\n")
 	buffers.WriteString(ctx.Resp.Body)
-	_, err = conn.Write(buffers.Bytes())
+	_, err := conn.Write(buffers.Bytes())
 	if err != nil {
 		ErrLog.Println(err)
 	}
