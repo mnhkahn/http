@@ -8,10 +8,12 @@ var DEFAULT_CONTROLLER *Controller = new(Controller)
 
 type ControllerIfac interface {
 	Init(ctx *Context)
+	Finish()
 }
 
 type Controller struct {
-	Ctx *Context
+	Ctx       *Context
+	TemplPath string
 }
 
 func (this *Controller) Init(ctx *Context) {
@@ -24,4 +26,17 @@ func (this *Controller) Option() {
 		allowMethods = append(allowMethods, method)
 	}
 	this.Ctx.Resp.Headers.Add(HTTP_HEAD_ALLOW, strings.Join(allowMethods, ", "))
+}
+
+func (this *Controller) ServeView(params ...interface{}) {
+	if len(params) == 1 {
+		if templ, exists := ViewsTemplFiles[params[0].(string)]; exists {
+			this.Ctx.Resp.Body = string(templ)
+		} else {
+			ErrLog.Println("Can't find the template file", params)
+		}
+	}
+}
+
+func (this *Controller) Finish() {
 }

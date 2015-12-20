@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
@@ -49,6 +51,9 @@ type Server struct {
 }
 
 var DEFAULT_SERVER *Server
+var ViewsTemplFiles map[string][]byte
+var AppPath string
+var ViewPath string
 
 func Serve(addr string) {
 	DEFAULT_SERVER.Addr = NewAddress(addr)
@@ -69,11 +74,6 @@ func Serve(addr string) {
 }
 
 func init() {
-	DEFAULT_SERVER = new(Server)
-	DEFAULT_SERVER.Routes = NewRoute()
-
-	Router("/", "OPTIONS", &Controller{}, "Option")
-
 	errlogFile, logErr := os.OpenFile("error.log", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 
 	if logErr != nil {
@@ -81,6 +81,21 @@ func init() {
 	}
 
 	ErrLog = log.New(errlogFile, "", log.LstdFlags|log.Llongfile)
+
+	DEFAULT_SERVER = new(Server)
+
+	AppPath, _ = filepath.Abs(filepath.Dir(os.Args[0]))
+	ViewPath = AppPath + "/views"
+	ViewsTemplFiles = make(map[string][]byte)
+
+	views, _ := ioutil.ReadDir(ViewPath)
+	for _, view := range views {
+		ViewsTemplFiles[view.Name()], _ = ioutil.ReadFile(ViewPath + "/" + view.Name())
+	}
+
+	DEFAULT_SERVER.Routes = NewRoute()
+
+	Router("/", "OPTIONS", &Controller{}, "Option")
 }
 
 func handleConnection(conn net.Conn) {
@@ -115,6 +130,7 @@ func handleConnection(conn net.Conn) {
 	ctx.Resp.Proto = ctx.Req.Proto
 	if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url] != nil {
 		DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url].ServeHTTP(ctx)
+
 	} else {
 		if _, exists := HTTP_METHOD[ctx.Req.Method]; !exists {
 			ctx.Resp.StatusCode = StatusMethodNotAllowed
