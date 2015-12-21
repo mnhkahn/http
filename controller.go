@@ -38,5 +38,10 @@ func (this *Controller) ServeView(params ...interface{}) {
 	}
 }
 
+func (this *Controller) Favicon() {
+	this.Ctx.Resp.StatusCode = StatusFound
+	this.Ctx.Resp.Headers.Add(HTTP_HEAD_LOCATION, "http://7b1h1l.com1.z0.glb.clouddn.com/c32.ico")
+}
+
 func (this *Controller) Finish() {
 }

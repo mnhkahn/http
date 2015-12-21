@@ -96,6 +96,7 @@ func init() {
 	DEFAULT_SERVER.Routes = NewRoute()
 
 	Router("/", "OPTIONS", &Controller{}, "Option")
+	Router("/favicon.ico", "GET", &Controller{}, "Favicon")
 }
 
 func handleConnection(conn net.Conn) {
@@ -116,7 +117,7 @@ func handleConnection(conn net.Conn) {
 				break
 			}
 		} else if err == io.EOF {
-			break
+			return
 		} else if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
 			break
 		} else {
@@ -130,7 +131,6 @@ func handleConnection(conn net.Conn) {
 	ctx.Resp.Proto = ctx.Req.Proto
 	if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url] != nil {
 		DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url].ServeHTTP(ctx)
-
 	} else {
 		if _, exists := HTTP_METHOD[ctx.Req.Method]; !exists {
 			ctx.Resp.StatusCode = StatusMethodNotAllowed
