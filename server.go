@@ -74,6 +74,8 @@ func Serve(addr string) {
 }
 
 func init() {
+	log.SetFlags(0)
+	log.Println(CYEAM_LOG)
 	errlogFile, logErr := os.OpenFile("error.log", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 
 	if logErr != nil {
@@ -158,8 +160,8 @@ func handleConnection(conn net.Conn) {
 	if err != nil {
 		ErrLog.Println(err)
 	}
-	ctx.elapse = time.Now().Sub(serve_time)
-	log.Println(ctx)
+	//	ctx.elapse = time.Now().Sub(serve_time)
+	log.Println(fmt.Sprintf(LOG_CONTEXT, conn.RemoteAddr(), "-", serve_time.Format(LOG_TIME_FORMAT), ctx.Req.Method, ctx.Req.Url, ctx.Req.Proto, ctx.Resp.StatusCode, len(ctx.Req.Body), "-", ctx.Req.UserAgent, 0))
 }
 
 func Router(path string, method string, ctrl ControllerIfac, methodName string) {
