@@ -5,7 +5,6 @@ type Header map[string][]string
 func NewHeader() Header {
 	h := make(Header)
 	h.Add(HTTP_HEAD_SERVER, "Cyeam")
-	h.Add(HTTP_HEAD_CONTENTTYPE, "text/html; charset=utf-8")
 	return h
 }
 
