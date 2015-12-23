@@ -8,7 +8,7 @@ import (
 type Request struct {
 	Method string
 
-	Url string
+	Url *URL
 
 	Proto string
 
@@ -36,9 +36,27 @@ func (this *Request) Init() {
 
 	this.Headers = make(map[string][]string, 0)
 
+	this.Url = new(URL)
+
 	startLine := strings.Split(b[:strings.Index(b, CRLF)], " ")
 	if len(startLine) == 3 {
-		this.Method, this.Url, this.Proto = startLine[0], startLine[1], startLine[2]
+		this.Method, this.Url.RawPath, this.Proto = startLine[0], startLine[1], startLine[2]
+
+		i := strings.Index(this.Url.RawPath, "?")
+		if i != -1 {
+			this.Url.Path = this.Url.RawPath[:i]
+		} else {
+			this.Url.Path = this.Url.RawPath
+		}
+
+		raw := this.Url.RawPath[i+1:]
+		i = strings.Index(raw, "#")
+		if i != -1 {
+			this.Url.RawQuery = raw[:i]
+		} else {
+			this.Url.RawQuery = raw
+		}
+		this.Url.Fragment = raw[i+1:]
 	}
 	b = b[strings.Index(b, CRLF)+len(CRLF):]
 

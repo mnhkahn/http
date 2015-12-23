@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"io/ioutil"
+	"strconv"
 	"strings"
 )
 
@@ -28,6 +29,25 @@ func (this *Controller) Option() {
 		allowMethods = append(allowMethods, method)
 	}
 	this.Ctx.Resp.Headers.Add(HTTP_HEAD_ALLOW, strings.Join(allowMethods, ", "))
+}
+
+func (this *Controller) getString(param string) string {
+	if len(this.Ctx.Req.Url.Query().Get(param)) > 0 {
+		return this.Ctx.Req.Url.Query().Get(param)[0]
+	}
+	return ""
+}
+
+func (this *Controller) GetString(param string) string {
+	return this.getString(param)
+}
+
+func (this *Controller) GetInt(param string) int {
+	if this.getString(param) != "" {
+		i, _ := strconv.Atoi(this.getString(param))
+		return i
+	}
+	return 0
 }
 
 func (this *Controller) ServeJson(j interface{}) {

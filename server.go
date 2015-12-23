@@ -131,8 +131,8 @@ func handleConnection(conn net.Conn) {
 
 	ctx.Req.Init()
 	ctx.Resp.Proto = ctx.Req.Proto
-	if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url] != nil {
-		DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url].ServeHTTP(ctx)
+	if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url.Path] != nil {
+		DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url.Path].ServeHTTP(ctx)
 	} else {
 		if _, exists := HTTP_METHOD[ctx.Req.Method]; !exists {
 			ctx.Resp.StatusCode = StatusMethodNotAllowed
@@ -154,14 +154,14 @@ func handleConnection(conn net.Conn) {
 			buffers.WriteString(fmt.Sprintf("%s: %s\r\n", k, vv))
 		}
 	}
-	buffers.WriteString("\r\n")
+	buffers.WriteString(CRLF)
 	buffers.WriteString(ctx.Resp.Body)
 	_, err := conn.Write(buffers.Bytes())
 	if err != nil {
 		ErrLog.Println(err)
 	}
 	//	ctx.elapse = time.Now().Sub(serve_time)
-	log.Println(fmt.Sprintf(LOG_CONTEXT, conn.RemoteAddr(), "-", serve_time.Format(LOG_TIME_FORMAT), ctx.Req.Method, ctx.Req.Url, ctx.Req.Proto, ctx.Resp.StatusCode, len(ctx.Req.Body), "-", ctx.Req.UserAgent, 0))
+	log.Println(fmt.Sprintf(LOG_CONTEXT, conn.RemoteAddr(), "-", serve_time.Format(LOG_TIME_FORMAT), ctx.Req.Method, ctx.Req.Url.RawPath, ctx.Req.Proto, ctx.Resp.StatusCode, len(ctx.Req.Body), "-", ctx.Req.UserAgent, 0))
 }
 
 func Router(path string, method string, ctrl ControllerIfac, methodName string) {
