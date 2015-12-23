@@ -51,7 +51,7 @@ type Server struct {
 }
 
 var DEFAULT_SERVER *Server
-var ViewsTemplFiles map[string][]byte
+var ViewsTemplFiles map[string]string
 var AppPath string
 var ViewPath string
 
@@ -88,11 +88,11 @@ func init() {
 
 	AppPath, _ = filepath.Abs(filepath.Dir(os.Args[0]))
 	ViewPath = AppPath + "/views"
-	ViewsTemplFiles = make(map[string][]byte)
+	ViewsTemplFiles = make(map[string]string)
 
 	views, _ := ioutil.ReadDir(ViewPath)
 	for _, view := range views {
-		ViewsTemplFiles[view.Name()], _ = ioutil.ReadFile(ViewPath + "/" + view.Name())
+		ViewsTemplFiles[view.Name()] = ViewPath + "/" + view.Name()
 	}
 
 	DEFAULT_SERVER.Routes = NewRoute()

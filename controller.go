@@ -1,6 +1,8 @@
 package http
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"strings"
 )
 
@@ -28,13 +30,20 @@ func (this *Controller) Option() {
 	this.Ctx.Resp.Headers.Add(HTTP_HEAD_ALLOW, strings.Join(allowMethods, ", "))
 }
 
+func (this *Controller) ServeJson(j interface{}) {
+	this.Ctx.Resp.Headers.Add(HTTP_HEAD_CONTENTTYPE, "text/plain; charset=utf-8")
+	v, _ := json.Marshal(j)
+	this.Ctx.Resp.Body = string(v)
+}
+
 func (this *Controller) ServeView(params ...interface{}) {
 	if len(params) <= 0 {
 
 	} else if len(params) == 1 {
 		this.Ctx.Resp.Headers.Add(HTTP_HEAD_CONTENTTYPE, "text/html; charset=utf-8")
 		if templ, exists := ViewsTemplFiles[params[0].(string)]; exists {
-			this.Ctx.Resp.Body = string(templ)
+			v, _ := ioutil.ReadFile(templ)
+			this.Ctx.Resp.Body = string(v)
 		} else {
 			ErrLog.Println("Can't find the template file", params)
 		}
