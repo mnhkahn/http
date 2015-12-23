@@ -58,10 +58,10 @@ var ViewPath string
 func Serve(addr string) {
 	DEFAULT_SERVER.Addr = NewAddress(addr)
 	ln, err := net.Listen("tcp", DEFAULT_SERVER.Addr.String())
-	defer ln.Close()
 	if err != nil {
 		panic(err)
 	}
+	defer ln.Close()
 
 	log.Printf("<<<Server Accepting on Port %s>>>\n", DEFAULT_SERVER.Addr.Port)
 	for {
