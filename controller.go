@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -60,11 +61,12 @@ func (this *Controller) ServeView(params ...interface{}) {
 	if len(params) <= 0 {
 
 	} else if len(params) == 1 {
-		this.Ctx.Resp.Headers.Add(HTTP_HEAD_CONTENTTYPE, "text/html; charset=utf-8")
 		if templ, exists := ViewsTemplFiles[params[0].(string)]; exists {
+			this.Ctx.Resp.Headers.Add(HTTP_HEAD_CONTENTTYPE, "text/html; charset=utf-8")
 			v, _ := ioutil.ReadFile(templ)
 			this.Ctx.Resp.Body = string(v)
 		} else {
+			this.debugLog(fmt.Sprintf("Can't find the template file %v", params))
 			ErrLog.Println("Can't find the template file", params)
 		}
 	} else {
@@ -84,6 +86,10 @@ func (this *Controller) ServeFile(params ...interface{}) {
 	} else {
 
 	}
+}
+
+func (this *Controller) debugLog(log string) {
+	this.Ctx.Resp.Body = log
 }
 
 func (this *Controller) Favicon() {
