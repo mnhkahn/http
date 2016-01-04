@@ -1,12 +1,9 @@
 package http
 
-import (
-//	"time"
-)
-
 type Context struct {
-	Req  *Request
-	Resp *Response
+	Req     *Request
+	Resp    *Response
+	ReqAddr *Address
 	//	elapse time.Duration
 }
 
