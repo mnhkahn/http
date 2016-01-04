@@ -24,6 +24,11 @@ func (this *Controller) Init(ctx *Context) {
 	this.Ctx = ctx
 }
 
+func (this *Controller) BasicAuth(realm string) {
+	this.Ctx.Resp.StatusCode = StatusUnauthorized
+	this.Ctx.Resp.Headers.Add(HTTP_HEAD_WWW_AUTHENTICATE, fmt.Sprintf("Basic realm=%s", realm))
+}
+
 func (this *Controller) Option() {
 	allowMethods := []string{}
 	for _, method := range HTTP_METHOD {

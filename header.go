@@ -20,14 +20,16 @@ func (this Header) Get(k string) string {
 }
 
 const (
-	HTTP_HEAD_USERAGENT       = "User-Agent"
-	HTTP_HEAD_HOST            = "Host"
-	HTTP_HEAD_LOCATION        = "Location"
-	HTTP_HEAD_SERVER          = "Server"
-	HTTP_HEAD_CONTENTTYPE     = "Content-Type"
-	HTTP_HEAD_CONTENTLENGTH   = "Content-length"
-	HTTP_HEAD_DATE            = "Date"
-	HTTP_HEAD_ALLOW           = "Allow"
-	HTTP_HEAD_FORM            = "Form" // 用户的Email地址，如果是爬虫，最好有这个头
-	HTTP_HEAD_X_FORWARDED_FOR = "X-Forwarded-For"
+	HTTP_HEAD_USERAGENT        = "User-Agent"
+	HTTP_HEAD_HOST             = "Host"
+	HTTP_HEAD_LOCATION         = "Location"
+	HTTP_HEAD_SERVER           = "Server"
+	HTTP_HEAD_CONTENTTYPE      = "Content-Type"
+	HTTP_HEAD_CONTENTLENGTH    = "Content-length"
+	HTTP_HEAD_DATE             = "Date"
+	HTTP_HEAD_ALLOW            = "Allow"
+	HTTP_HEAD_FORM             = "Form" // 用户的Email地址，如果是爬虫，最好有这个头
+	HTTP_HEAD_X_FORWARDED_FOR  = "X-Forwarded-For"
+	HTTP_HEAD_WWW_AUTHENTICATE = "WWW-authenticate"
+	HTTP_HEAD_AUTHORIZATION    = "Authorization"
 )
