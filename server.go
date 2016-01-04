@@ -36,6 +36,8 @@ func NewAddress(addr_str string) *Address {
 	addr_strs := strings.Split(addr_str, ":")
 	if len(addr_strs) == 2 {
 		addr.Host, addr.Port = addr_strs[0], addr_strs[1]
+	} else {
+		addr.Host = addr_str
 	}
 	return addr
 }
