@@ -165,7 +165,7 @@ func handleConnection(conn net.Conn) {
 		ErrLog.Println(err)
 	}
 	//	ctx.elapse = time.Now().Sub(serve_time)
-	log.Println(fmt.Sprintf(LOG_CONTEXT, ctx.ReqAddr.String(), "-", serve_time.Format(LOG_TIME_FORMAT), ctx.Req.Method, ctx.Req.Url.RawPath, ctx.Req.Proto, ctx.Resp.StatusCode, len(ctx.Req.Body), "-", ctx.Req.UserAgent, 0))
+	log.Println(ctx.Req.Headers.Get(HTTP_HEAD_X_FORWARDED_FOR), fmt.Sprintf(LOG_CONTEXT, ctx.ReqAddr.String(), "-", serve_time.Format(LOG_TIME_FORMAT), ctx.Req.Method, ctx.Req.Url.RawPath, ctx.Req.Proto, ctx.Resp.StatusCode, len(ctx.Req.Body), "-", ctx.Req.UserAgent, 0))
 }
 
 func Router(path string, method string, ctrl ControllerIfac, methodName string) {
