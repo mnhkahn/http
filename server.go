@@ -137,7 +137,12 @@ func handleConnection(conn net.Conn) {
 		ctx.ReqAddr = NewAddress(ctx.Req.Headers.Get(HTTP_HEAD_X_FORWARDED_FOR))
 	}
 	ctx.Resp.Proto = ctx.Req.Proto
-	if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url.Path] != nil {
+
+	// black url list
+	if _, exists := BLACK_URL[ctx.Req.Url.Path]; exists {
+		ctx.Resp.StatusCode = StatusOK
+		ctx.Resp.Body = "Fuck You!"
+	} else if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url.Path] != nil {
 		DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url.Path].ServeHTTP(ctx)
 	} else {
 		if _, exists := HTTP_METHOD[ctx.Req.Method]; !exists {
@@ -167,7 +172,7 @@ func handleConnection(conn net.Conn) {
 		ErrLog.Println(err)
 	}
 	//	ctx.elapse = time.Now().Sub(serve_time)
-	log.Println(fmt.Sprintf(LOG_CONTEXT, ctx.ReqAddr.String(), "-", serve_time.Format(LOG_TIME_FORMAT), ctx.Req.Method, ctx.Req.Url.RawPath, ctx.Req.Proto, ctx.Resp.StatusCode, len(ctx.Req.Body), "-", ctx.Req.UserAgent, 0))
+	log.Println(fmt.Sprintf(LOG_CONTEXT, ctx.ReqAddr.Host, "-", serve_time.Format(LOG_TIME_FORMAT), ctx.Req.Method, ctx.Req.Url.RawPath, ctx.Req.Proto, ctx.Resp.StatusCode, len(ctx.Req.Body), "-", ctx.Req.UserAgent, 0))
 }
 
 func Router(path string, method string, ctrl ControllerIfac, methodName string) {

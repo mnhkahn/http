@@ -3,7 +3,6 @@ package http
 import (
 	"bytes"
 	"encoding/base64"
-	"fmt"
 	"strings"
 )
 
@@ -85,8 +84,9 @@ func (this *Request) Authorization() (username, password string, ok bool) {
 	if this.Headers.Get(HTTP_HEAD_AUTHORIZATION) != "" {
 		if strings.HasPrefix(this.Headers.Get(HTTP_HEAD_AUTHORIZATION), AUTH_BASIC) {
 			authorization, err := base64.StdEncoding.DecodeString(this.Headers.Get(HTTP_HEAD_AUTHORIZATION)[len(AUTH_BASIC):])
-			fmt.Println(string(authorization), this.Headers.Get(HTTP_HEAD_AUTHORIZATION), "**********", err)
-
+			if err != nil {
+				return
+			}
 			s := strings.IndexByte(string(authorization), ':')
 			if s < 0 {
 				return
