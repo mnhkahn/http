@@ -88,9 +88,13 @@ func init() {
 	ViewPath = AppPath + "/views"
 	ViewsTemplFiles = make(map[string][]byte)
 
+	var err error
 	views, _ := ioutil.ReadDir(ViewPath)
 	for _, view := range views {
-		ViewsTemplFiles[view.Name()], _ = ioutil.ReadFile(ViewPath + "/" + view.Name())
+		ViewsTemplFiles[view.Name()], err = ioutil.ReadFile(ViewPath + "/" + view.Name())
+		if err != nil {
+			ErrLog.Println(err)
+		}
 	}
 
 	DEFAULT_SERVER.Routes = NewRoute()
