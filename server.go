@@ -36,6 +36,8 @@ func NewAddress(addr_str string) *Address {
 	addr_strs := strings.Split(addr_str, ":")
 	if len(addr_strs) == 2 {
 		addr.Host, addr.Port = addr_strs[0], addr_strs[1]
+	} else {
+		addr.Host = addr_str
 	}
 	return addr
 }
@@ -51,17 +53,17 @@ type Server struct {
 }
 
 var DEFAULT_SERVER *Server
-var ViewsTemplFiles map[string][]byte
+var ViewsTemplFiles map[string]string
 var AppPath string
 var ViewPath string
 
 func Serve(addr string) {
 	DEFAULT_SERVER.Addr = NewAddress(addr)
 	ln, err := net.Listen("tcp", DEFAULT_SERVER.Addr.String())
-	defer ln.Close()
 	if err != nil {
 		panic(err)
 	}
+	defer ln.Close()
 
 	log.Printf("<<<Server Accepting on Port %s>>>\n", DEFAULT_SERVER.Addr.Port)
 	for {
@@ -74,6 +76,8 @@ func Serve(addr string) {
 }
 
 func init() {
+	log.SetFlags(0)
+	log.Println(CYEAM_LOG)
 	errlogFile, logErr := os.OpenFile("error.log", os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 
 	if logErr != nil {
@@ -86,7 +90,7 @@ func init() {
 
 	AppPath, _ = filepath.Abs(filepath.Dir(os.Args[0]))
 	ViewPath = AppPath + "/views"
-	ViewsTemplFiles = make(map[string][]byte)
+	ViewsTemplFiles = make(map[string]string)
 
 	var err error
 	views, _ := ioutil.ReadDir(ViewPath)
@@ -100,6 +104,7 @@ func init() {
 	DEFAULT_SERVER.Routes = NewRoute()
 
 	Router("/", "OPTIONS", &Controller{}, "Option")
+	Router("/favicon.ico", "GET", &Controller{}, "Favicon")
 }
 
 func handleConnection(conn net.Conn) {
@@ -108,6 +113,7 @@ func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	ctx := NewContext()
+	ctx.ReqAddr = NewAddress(conn.RemoteAddr().String())
 	ctx.Req = NewRequest()
 	ctx.Resp = NewResponse()
 
@@ -120,7 +126,7 @@ func handleConnection(conn net.Conn) {
 				break
 			}
 		} else if err == io.EOF {
-			break
+			return
 		} else if neterr, ok := err.(net.Error); ok && neterr.Timeout() {
 			break
 		} else {
@@ -131,10 +137,17 @@ func handleConnection(conn net.Conn) {
 	}
 
 	ctx.Req.Init()
+	if ctx.Req.Headers.Get(HTTP_HEAD_X_FORWARDED_FOR) != "" {
+		ctx.ReqAddr = NewAddress(ctx.Req.Headers.Get(HTTP_HEAD_X_FORWARDED_FOR))
+	}
 	ctx.Resp.Proto = ctx.Req.Proto
-	if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url] != nil {
-		DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url].ServeHTTP(ctx)
 
+	// black url list
+	if _, exists := BLACK_URL[ctx.Req.Url.Path]; exists {
+		ctx.Resp.StatusCode = StatusOK
+		ctx.Resp.Body = "Fuck You!"
+	} else if DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url.Path] != nil {
+		DEFAULT_SERVER.Routes.routes[ctx.Req.Method][ctx.Req.Url.Path].ServeHTTP(ctx)
 	} else {
 		if _, exists := HTTP_METHOD[ctx.Req.Method]; !exists {
 			ctx.Resp.StatusCode = StatusMethodNotAllowed
@@ -156,14 +169,14 @@ func handleConnection(conn net.Conn) {
 			buffers.WriteString(fmt.Sprintf("%s: %s\r\n", k, vv))
 		}
 	}
-	buffers.WriteString("\r\n")
+	buffers.WriteString(CRLF)
 	buffers.WriteString(ctx.Resp.Body)
 	_, err := conn.Write(buffers.Bytes())
 	if err != nil {
 		ErrLog.Println(err)
 	}
-	ctx.elapse = time.Now().Sub(serve_time)
-	log.Println(ctx)
+	//	ctx.elapse = time.Now().Sub(serve_time)
+	log.Println(fmt.Sprintf(LOG_CONTEXT, ctx.ReqAddr.Host, "-", serve_time.Format(LOG_TIME_FORMAT), ctx.Req.Method, ctx.Req.Url.RawPath, ctx.Req.Proto, ctx.Resp.StatusCode, len(ctx.Req.Body), "-", ctx.Req.UserAgent, 0))
 }
 
 func Router(path string, method string, ctrl ControllerIfac, methodName string) {
